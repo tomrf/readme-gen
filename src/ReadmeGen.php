@@ -71,15 +71,39 @@ class ReadmeGen
 
     public function writeMarkdown($stream): void
     {
-        $composerJsonExtra = $this->composerJson->getExtra();
-
         $template = file_get_contents('resources/template.md');
+
+        // set basic composer package keys
+        foreach (['name', 'type', 'description', 'homepage', 'license'] as $key) {
+            $value = $this->composerJson->{$key};
+
+            if (\is_array($value)) {
+                $value = trim(implode(', ', $value), ', ');
+            }
+
+            $template = str_replace(
+                sprintf(':package_%s', $key),
+                $value,
+                $template
+            );
+        }
+
+        // set extra keys
+        foreach ($this->composerJson->getExtra() as $key => $value) {
+            if (\is_array($value)) {
+                $value = implode(PHP_EOL, $value);
+            }
+
+            $template = str_replace(
+                sprintf(':package_extra_%s', $key),
+                $value,
+                $template
+            );
+        }
+
+        // set special composer package keys
         $template = str_replace(':package_vendor', $this->vendorName, $template);
         $template = str_replace(':package_project', $this->projectName, $template);
-        $template = str_replace(':package_name', $this->composerJson->getName(), $template);
-        $template = str_replace(':package_description', $this->composerJson->getDescription(), $template);
-        $template = str_replace(':package_long_description', implode(PHP_EOL, $composerJsonExtra['long-description']), $template);
-        $template = str_replace(':package_example', implode(PHP_EOL, $composerJsonExtra['example']), $template);
 
         $this->writeNl($stream, $template);
         $this->writeMarkdownDocumentation($stream);
@@ -117,7 +141,7 @@ class ReadmeGen
                 $tags .= '>     '.''.sprintf(
                     '@%-8s %s ',
                     $tag->getName(),
-                    mb_substr($tag->render(), \strlen($tag->getName()) + 2),
+                    str_replace(["\n", "\r"], ' ', mb_substr($tag->render(), \strlen($tag->getName()) + 2)),
                 ).''.PHP_EOL;
 
                 if ('return' === $tag->getName()) {
@@ -125,8 +149,10 @@ class ReadmeGen
                 }
             }
 
-            $docComment = str_replace(["\n", "\r"], ' ', $docComment->getSummary());
-            $this->writeNl($stream, $docComment);
+            $docCommentText = str_replace(["\n", "\r"], ' ', $docComment->getSummary());
+            $docCommentText .= PHP_EOL.PHP_EOL.$docComment->getDescription();
+
+            $this->writeNl($stream, $docCommentText);
         }
 
         $this->writeNoNl($stream, '>    **``'.$method->getName().'(');
@@ -244,7 +270,29 @@ class ReadmeGen
         }
 
         $reflection = new ReflectionClass($classname);
+
         if ($this->isSourceExcluded($reflection->getFileName())) {
+            return true;
+        }
+
+        if ($this->isClassInternal($reflection)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private function isClassInternal(ReflectionClass $reflection): bool
+    {
+        $docComment = $reflection->getDocComment();
+        $context = $this->contextFactory->createFromReflector($reflection);
+
+        if (!$docComment) {
+            return false;
+        }
+
+        $docComment = $this->docBlockFactory->create($docComment, $context);
+        if (\count($docComment->getTagsByName('internal')) > 0) {
             return true;
         }
 

@@ -13,7 +13,7 @@
         }
     ],
     "extra": {
-        "long-description": [
+        "intro": [
             "This is a long description of the package and stuff and stuff lorem ipsum dolor sit amet!"
         ],
         "example": [
