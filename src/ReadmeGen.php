@@ -127,60 +127,105 @@ class ReadmeGen
         }
     }
 
-    private function writeMarkdownForMethod($stream, ReflectionMethod $method, Context $context): void
+    private function getMethodTagsString(ReflectionMethod $method, Context $context = null): string
     {
+        $tagsString = '';
+
+        foreach ($this->getTags($method, $context) as $tag) {
+            $tagsString .= sprintf("@%-8s %s\n", key($tag), (string) $tag[key($tag)]);
+        }
+
+        return $tagsString;
+    }
+
+    private function writeMarkdownForMethod($stream, ReflectionMethod $method): void
+    {
+        $context = $this->contextFactory->createFromReflector($method);
+        $docBlock = $this->docBlockFactory->create($method, $context);
+
+        // method headline
         $this->writeNl($stream, sprintf('#### %s()', $method->getName()));
 
-        $tags = '';
-        $hasTagReturn = false;
-        $docComment = $method->getDocComment();
-        if ($docComment) {
-            $docComment = $this->docBlockFactory->create($docComment, $context);
-
-            foreach ($docComment->getTags() as $tag) {
-                $tags .= '>     '.''.sprintf(
-                    '@%-8s %s ',
-                    $tag->getName(),
-                    str_replace(["\n", "\r"], ' ', mb_substr($tag->render(), \strlen($tag->getName()) + 2)),
-                ).''.PHP_EOL;
-
-                if ('return' === $tag->getName()) {
-                    $hasTagReturn = true;
-                }
-            }
-
-            $docCommentText = str_replace(["\n", "\r"], ' ', $docComment->getSummary());
-            $docCommentText .= PHP_EOL.PHP_EOL.$docComment->getDescription();
-
-            $this->writeNl($stream, $docCommentText);
+        // summary
+        if ('' !== $docBlock->getSummary()) {
+            $this->writeNl($stream, str_replace(["\n", "\r"], ' ', $docBlock->getSummary()));
         }
 
-        $this->writeNoNl($stream, '>    **``'.$method->getName().'(');
+        // description
+        if ('' !== $docBlock->getDescription()) {
+            $this->writeNl($stream, str_replace(["\n", "\r"], ' ', (string) $docBlock->getDescription()));
+        }
 
-        $paramString = '';
-        foreach ($method->getParameters() as $param) {
-            $paramString .= $param->getType().' $'.$param->getName();
+        // method definition and tags
+        $this->writeNl($stream, sprintf(
+            "```php\n%s\n%s```",
+            $this->getMethodDefinition($method),
+            $this->getMethodTagsString($method) ? sprintf("\n%s", $this->getMethodTagsString($method)) : '',
+        ));
+    }
+
+    private function getTags($objectOrString, Context $context = null): array
+    {
+        $tags = [];
+        $docBlock = $this->docBlockFactory->create($objectOrString, $context);
+
+        foreach ($docBlock->getTags() as $tag) {
+            $tags[] = [
+                $tag->getName() => str_replace(
+                    ["\n", "\r"],
+                    ' ',
+                    (string) $tag
+                ),
+            ];
+        }
+
+        return $tags;
+    }
+
+    private function getAccessForReflectionMethod(ReflectionMethod $method): string
+    {
+        return trim(sprintf(
+            '%s%s%s%s%s%s',
+            $method->isAbstract() ? 'abstract ' : '',
+            $method->isStatic() ? 'static ' : '',
+            $method->isPrivate() ? 'private ' : '',
+            $method->isProtected() ? 'protected ' : '',
+            $method->isPublic() ? 'public ' : '',
+            $method->isInternal() ? 'private ' : '',
+        ));
+    }
+
+    private function getMethodDefinition(ReflectionMethod $method): string
+    {
+        $parametersString = '';
+
+        $parameters = $method->getParameters();
+        foreach ($parameters as $n => $param) {
+            $type = $param->getType() ? sprintf('%s ', $param->getType()) : '';
+            $parametersString .= sprintf('    %s$%s', $type, $param->getName());
 
             if ($param->isDefaultValueAvailable()) {
-                if ('string' === (string) $param->getType()) {
-                    $paramString .= ' = \''.$param->getDefaultValue().'\'';
-                } elseif ('array' === (string) $param->getType()) {
-                    $paramString .= ' = []';
+                if ('array' === (string) $param->getType()) {
+                    $parametersString .= ' = []';
+                } elseif (str_contains((string) $param->getType(), 'string')) {
+                    $parametersString .= sprintf(' = \'%s\'', $param->getDefaultValue());
                 } else {
-                    $paramString .= ' = '.$param->getDefaultValue();
+                    $parametersString .= sprintf(' = %s', $param->getDefaultValue());
                 }
             }
-            $paramString .= ', ';
+
+            if (array_key_last($parameters) !== $n) {
+                $parametersString .= ','.PHP_EOL;
+            }
         }
 
-        $this->writeNoNl($stream, trim($paramString, ', '));
-        $this->writeNoNl($stream, '): '.($method->getReturnType() ?? 'void').'``**'.PHP_EOL.'>     '.PHP_EOL.$tags);
-
-        if (!$hasTagReturn) {
-            $this->write($stream, '>     @return   '.($method->getReturnType() ?? 'void').'');
-        }
-
-        $this->writeNl($stream, '');
+        return sprintf(
+            "%s function %s(\n%s\n): %s",
+            $this->getAccessForReflectionMethod($method),
+            $method->getName(),
+            $parametersString,
+            ($method->getReturnType() ?? 'void')
+        );
     }
 
     private function writeMarkdownForClass($stream, string $class): void
@@ -204,7 +249,7 @@ class ReadmeGen
                 continue;
             }
 
-            $this->writeMarkdownForMethod($stream, $method, $context);
+            $this->writeMarkdownForMethod($stream, $method);
         }
 
         $this->writeNl($stream, '');
