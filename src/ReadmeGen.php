@@ -69,6 +69,42 @@ class ReadmeGen
         ClassFinder::setAppRoot($this->projectRoot);
     }
 
+    public function generate(
+        ReadmeFormatterInterface $formatter,
+        string $templateFilename
+    ): string {
+        $documentation = '';
+
+        foreach ($this->getAutoloadNamespaces() as $namespace) {
+            $namespace = trim($namespace['namespace'], '\\');
+            $classes = ClassFinder::getClassesInNamespace($namespace, ClassFinder::RECURSIVE_MODE);
+
+            foreach ($classes as $class) {
+                if ($this->isClassExcluded($class)) {
+                    continue;
+                }
+
+                $reflectionClass = new ReflectionClass($class);
+
+                $documentation .= $formatter->formatClass($reflectionClass);
+
+                foreach ($reflectionClass->getMethods() as $method) {
+                    if (!$method->isPublic()) {
+                        continue;
+                    }
+
+                    $documentation .= $formatter->formatMethod($method);
+                }
+            }
+        }
+
+        $template = file_get_contents($templateFilename);
+
+        return $this->compileTemplate($template, [
+            'documentation' => $documentation,
+        ]);
+    }
+
     public function writeMarkdown($stream): void
     {
         $template = file_get_contents('resources/template.md');
@@ -105,14 +141,51 @@ class ReadmeGen
         $template = str_replace(':package_vendor', $this->vendorName, $template);
         $template = str_replace(':package_project', $this->projectName, $template);
 
+        // hax tmp hax
+        $template = str_replace(':documentation', '', $template);
+
         $this->writeNl($stream, $template);
         $this->writeMarkdownDocumentation($stream);
     }
 
+    private function compileTemplate(string $template, array $extra = []): string
+    {
+        $return = $template;
+
+        // set basic composer package keys
+        foreach (['name', 'type', 'description', 'homepage', 'license'] as $key) {
+            $value = $this->composerJson->{$key};
+            if (\is_array($value)) {
+                $value = trim(implode(', ', $value), ', ');
+            }
+            $return = str_replace(sprintf(':package_%s', $key), $value, $return);
+        }
+
+        // set composer extra keys
+        foreach ($this->composerJson->getExtra() as $key => $value) {
+            if (\is_array($value)) {
+                $value = implode(PHP_EOL, $value);
+            }
+            $return = str_replace(sprintf(':package_extra_%s', $key), $value, $return);
+        }
+
+        // set special composer package keys
+        $return = str_replace(':package_vendor', $this->vendorName, $return);
+        $return = str_replace(':package_project', $this->projectName, $return);
+
+        // set $extra keys
+        foreach ($extra as $key => $value) {
+            if (\is_array($value)) {
+                $value = implode(PHP_EOL, $value);
+            }
+            $return = str_replace(sprintf(':%s', $key), $value, $return);
+        }
+
+        return $return;
+    }
+
     private function writeMarkdownDocumentation($stream): void
     {
-        $this->writeNl($stream, '## Documentation');
-
         foreach ($this->getAutoloadNamespaces() as $namespace) {
             $namespace = trim($namespace['namespace'], '\\');
             $classes = ClassFinder::getClassesInNamespace($namespace, ClassFinder::RECURSIVE_MODE);
@@ -127,15 +200,31 @@ class ReadmeGen
         }
     }
 
-    private function getMethodTagsString(ReflectionMethod $method, Context $context = null): string
+    private function writeMarkdownForClass($stream, string $class): void
     {
-        $tagsString = '';
+        $reflection = new ReflectionClass($class);
+        $docComment = $reflection->getDocComment();
+        $context = $this->contextFactory->createFromReflector($reflection);
 
-        foreach ($this->getTags($method, $context) as $tag) {
-            $tagsString .= sprintf("@%-8s %s\n", key($tag), (string) $tag[key($tag)]);
+        if ($docComment) {
+            $docComment = $this->docBlockFactory->create($docComment, $context);
+            $docComment = str_replace(["\n", "\r"], ' ', $docComment->getSummary());
+        } else {
+            $docComment = '*No description for class*';
         }
 
-        return $tagsString;
+        $this->writeNl($stream, sprintf('### 📂 %s::class', $reflection->getName()));
+        $this->writeNl($stream, sprintf('%s', $docComment));
+
+        foreach ($reflection->getMethods() as $method) {
+            if (!$method->isPublic()) {
+                continue;
+            }
+
+            $this->writeMarkdownForMethod($stream, $method);
+        }
+
+        $this->writeNl($stream, '***');
     }
 
     private function writeMarkdownForMethod($stream, ReflectionMethod $method): void
@@ -152,7 +241,7 @@ class ReadmeGen
         }
 
         // description
-        if ('' !== $docBlock->getDescription()) {
+        if ('' !== (string) $docBlock->getDescription()) {
             $this->writeNl($stream, str_replace(["\n", "\r"], ' ', (string) $docBlock->getDescription()));
         }
 
@@ -180,6 +269,17 @@ class ReadmeGen
         }
 
         return $tags;
+    }
+
+    private function getMethodTagsString(ReflectionMethod $method, Context $context = null): string
+    {
+        $tagsString = '';
+
+        foreach ($this->getTags($method, $context) as $tag) {
+            $tagsString .= sprintf("@%-8s %s\n", key($tag), (string) $tag[key($tag)]);
+        }
+
+        return $tagsString;
     }
 
     private function getAccessForReflectionMethod(ReflectionMethod $method): string
@@ -226,33 +326,6 @@ class ReadmeGen
             $parametersString,
             ($method->getReturnType() ?? 'void')
         );
-    }
-
-    private function writeMarkdownForClass($stream, string $class): void
-    {
-        $reflection = new ReflectionClass($class);
-        $docComment = $reflection->getDocComment();
-        $context = $this->contextFactory->createFromReflector($reflection);
-
-        if ($docComment) {
-            $docComment = $this->docBlockFactory->create($docComment, $context);
-            $docComment = str_replace(["\n", "\r"], ' ', $docComment->getSummary());
-        } else {
-            $docComment = '*No description for class*';
-        }
-
-        $this->writeNl($stream, sprintf('### 📂 %s::class', $reflection->getName()));
-        $this->writeNl($stream, sprintf('%s', $docComment));
-
-        foreach ($reflection->getMethods() as $method) {
-            if (!$method->isPublic()) {
-                continue;
-            }
-
-            $this->writeMarkdownForMethod($stream, $method);
-        }
-
-        $this->writeNl($stream, '');
     }
 
     private function writeNl($stream, string $data): int

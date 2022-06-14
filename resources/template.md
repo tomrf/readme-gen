@@ -3,6 +3,8 @@
 
 :package_extra_intro
 
+📔 [Go to documentation](#documentation)
+
 ## Installation
 Installation via composer:
 
@@ -23,3 +25,6 @@ composer test
 ## License
 This project is released under the :package_license License (:package_license).
 See [LICENSE](LICENSE) for more information.
+
+## Documentation
+:documentation
