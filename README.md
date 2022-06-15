@@ -43,11 +43,6 @@ See [LICENSE](LICENSE) for more information.
  - [Tomrf\ReadmeGen\ReadmeGen](#-tomrfreadmegenreadmegenclass)
    - [__construct](#__construct)
    - [generate](#generate)
- - [Tomrf\ReadmeGen\Formatter\MarkdownFormatter](#-tomrfreadmegenformattermarkdownformatterclass)
-   - [__construct](#__construct)
-   - [formatToc](#formattoc)
-   - [formatClass](#formatclass)
-   - [formatMethod](#formatmethod)
 
 
 ***
@@ -76,49 +71,7 @@ public function generate(
 ```
 
 
-***
-
-### 📂 Tomrf\ReadmeGen\Formatter\MarkdownFormatter::class
-
-MarkdownFormatter.
-
-#### __construct()
-
-```php
-public function __construct(
-    phpDocumentor\Reflection\DocBlockFactoryInterface $docBlockFactory,
-    phpDocumentor\Reflection\Types\ContextFactory $contextFactory
-): void
-```
-
-#### formatToc()
-
-```php
-public function formatToc(
-    array $toc
-): string
-```
-
-#### formatClass()
-
-```php
-public function formatClass(
-    ReflectionClass $reflection
-): string
-```
-
-#### formatMethod()
-
-```php
-public function formatMethod(
-    ReflectionMethod $reflection,
-    string $methodDefinition,
-    array $tags
-): string
-```
-
-
 
 ***
 
-_Generated 2022-06-15T22:32:28+02:00 using 📚[tomrf/readme-gen](https://packagist.org/packages/tomrf/readme-gen)_
+_Generated 2022-06-15T22:33:50+02:00 using 📚[tomrf/readme-gen](https://packagist.org/packages/tomrf/readme-gen)_

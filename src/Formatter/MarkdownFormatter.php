@@ -11,8 +11,10 @@ use ReflectionMethod;
 
 /**
  * MarkdownFormatter.
+ *
+ * @internal
  */
-class MarkdownFormatter extends AbstractFormatter
+final class MarkdownFormatter extends AbstractFormatter
 {
     public function __construct(
         protected DocBlockFactoryInterface $docBlockFactory,

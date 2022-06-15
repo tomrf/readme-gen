@@ -9,6 +9,9 @@ use phpDocumentor\Reflection\Types\ContextFactory;
 use ReflectionClass;
 use ReflectionMethod;
 
+/**
+ * ReadmeFormatterInterface.
+ */
 interface ReadmeFormatterInterface
 {
     public function __construct(
