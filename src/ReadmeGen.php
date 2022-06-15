@@ -99,7 +99,7 @@ class ReadmeGen
                     $documentation .= $formatter->formatMethod(
                         $method,
                         $this->getMethodDefinition($method),
-                        $this->getTags($method)
+                        $this->getTags($method, $this->contextFactory->createFromReflector($method))
                     );
                 }
             }
