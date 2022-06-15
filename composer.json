@@ -54,6 +54,9 @@
             "Tomrf\\ReadmeGen\\Test\\": "tests/"
         }
     },
+    "bin": [
+        "bin/readme-gen"
+    ],
     "scripts": {
         "phpunit": [
             "phpunit -c .phpunit.dist.xml --colors=auto --coverage-text --stderr"

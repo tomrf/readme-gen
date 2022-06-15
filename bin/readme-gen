@@ -1,0 +1,25 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+use phpDocumentor\Reflection\DocBlockFactory;
+use phpDocumentor\Reflection\Types\ContextFactory;
+use Tomrf\ReadmeGen\Formatter\MarkdownFormatter;
+use Tomrf\ReadmeGen\ReadmeGen;
+
+require 'vendor/autoload.php';
+
+if (!isset($argv[2])) {
+    fprintf(STDERR, "error: missing argument(s)\nusage: readme-gen <projectPath> <templatePath>\n");
+
+    exit(1);
+}
+
+echo (new ReadmeGen($argv[1]))->generate(
+    new MarkdownFormatter(
+        DocBlockFactory::createInstance(),
+        new ContextFactory(),
+    ),
+    $argv[2]
+);
