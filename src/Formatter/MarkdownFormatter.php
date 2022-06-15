@@ -90,7 +90,7 @@ final class MarkdownFormatter extends AbstractFormatter
         }
 
         $formatted .= sprintf(
-            "```php\n%s\n%s```\n\n",
+            "```php\n%s\n\n%s```\n\n",
             $methodDefinition,
             $tagsString,
         );

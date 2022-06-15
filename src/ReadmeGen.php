@@ -69,6 +69,11 @@ class ReadmeGen
         $this->contextFactory = new \phpDocumentor\Reflection\Types\ContextFactory();
     }
 
+    /**
+     * Generate readme.
+     *
+     * @throws \Exception
+     */
     public function generate(
         ReadmeFormatterInterface $formatter,
         string $templateFilename
