@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Tomrf\ReadmeGen;
 
 use HaydenPierce\ClassFinder\ClassFinder;
-use MCStreetguy\ComposerParser\ComposerJson;
-use MCStreetguy\ComposerParser\Factory as ComposerParser;
 use ReflectionClass;
 use RuntimeException;
 use Tomrf\ReadmeGen\Interface\ReadmeFormatterInterface;
@@ -20,7 +18,7 @@ class ReadmeGen
     private string $vendorName;
     private string $projectName;
 
-    private ComposerJson $composerJson;
+    private ComposerJsonParser $composerJsonParser;
 
     public function __construct(string $projectRoot)
     {
@@ -44,18 +42,16 @@ class ReadmeGen
         }
 
         $this->projectRoot = $projectRoot;
-        $this->composerJson = ComposerParser::parse(sprintf('%scomposer.json', $projectRoot));
+        $this->composerJsonParser = new ComposerJsonParser(sprintf('%s/composer.json', $projectRoot));
 
-        $match = preg_match('/^([a-z0-9_.-]+)*\/([a-z0-9_.-]+)*$/', $this->composerJson->getName(), $matches);
-        if (1 !== $match) {
+        if (!$this->composerJsonParser->has('name')) {
             throw new RuntimeException(sprintf(
-                'Could not parse vendor and project name name from composer.json package name: "%s"',
-                $this->composerJson->getName()
+                'Composer JSON missing required property "name": %scomposer.sjon',
+                $projectRoot
             ));
         }
 
-        $this->vendorName = $matches[1];
-        $this->projectName = $matches[2];
+        $this->parsePackageName($this->composerJsonParser->get('name'));
 
         $this->autoloadProject();
         ClassFinder::setAppRoot($this->projectRoot);
@@ -69,7 +65,7 @@ class ReadmeGen
         $documentation = '';
 
         foreach ($this->getAutoloadNamespaces() as $namespace) {
-            $namespace = trim($namespace['namespace'], '\\');
+            $namespace = $namespace['namespace'];
             $classes = ClassFinder::getClassesInNamespace($namespace, ClassFinder::RECURSIVE_MODE);
 
             foreach ($classes as $class) {
@@ -96,47 +92,33 @@ class ReadmeGen
 
         $template = file_get_contents($templateFilename);
 
-        return $this->compileTemplate($template, [
-            'documentation_body' => $documentation,
-            'documentation_toc' => $docTocFormatted,
-            'date' => date('c'),
-        ]);
+        $templateCompiler = new TemplateCompiler();
+
+        return $templateCompiler->compile(
+            new ComposerJsonParser(sprintf('%s/composer.json', $this->projectRoot)),
+            $template,
+            [
+                'documentation_body' => $documentation,
+                'documentation_toc' => $docTocFormatted,
+                'package_vendor' => $this->vendorName,
+                'package_project' => $this->projectName,
+                'date' => date('c'),
+            ]
+        );
     }
 
-    private function compileTemplate(string $template, array $extra = []): string
+    private function parsePackageName(string $name): void
     {
-        $return = $template;
-
-        // set basic composer package keys
-        foreach (['name', 'type', 'description', 'homepage', 'license'] as $key) {
-            $value = $this->composerJson->{$key};
-            if (\is_array($value)) {
-                $value = trim(implode(', ', $value), ', ');
-            }
-            $return = str_replace(sprintf(':package_%s', $key), $value, $return);
+        $match = preg_match('/^([a-z0-9_.-]+)*\/([a-z0-9_.-]+)*$/', $name, $matches);
+        if (1 !== $match) {
+            throw new RuntimeException(sprintf(
+                'Could not parse vendor and project name name from composer.json package name: "%s"',
+                $name
+            ));
         }
 
-        // set composer extra keys
-        foreach ($this->composerJson->getExtra() as $key => $value) {
-            if (\is_array($value)) {
-                $value = implode(PHP_EOL, $value);
-            }
-            $return = str_replace(sprintf(':package_extra_%s', $key), $value, $return);
-        }
-
-        // set special composer package keys
-        $return = str_replace(':package_vendor', $this->vendorName, $return);
-        $return = str_replace(':package_project', $this->projectName, $return);
-
-        // set $extra keys
-        foreach ($extra as $key => $value) {
-            if (\is_array($value)) {
-                $value = implode(PHP_EOL, $value);
-            }
-            $return = str_replace(sprintf(':%s', $key), $value, $return);
-        }
-
-        return $return;
+        $this->vendorName = $matches[1];
+        $this->projectName = $matches[2];
     }
 
     private function autoloadProject(): void
@@ -144,15 +126,35 @@ class ReadmeGen
         require $this->projectRoot.'/vendor/autoload.php';
     }
 
-    private function getAutoloadNamespaces(): array
+    private function getAutoloadNamespaces(string $key = 'autoload'): array
     {
-        return $this->composerJson->getAutoload()->getPsr4()->getNamespaces();
+        $array = [];
+
+        $autoload = $this->composerJsonParser->get($key);
+        $mechanism = 'psr-4';
+
+        if (!isset($autoload->{$mechanism})) {
+            return $array;
+        }
+
+        foreach ($autoload->{$mechanism} as $namespace => $source) {
+            $array[] = [
+                'namespace' => trim($namespace, '\\'),
+                'source' => $source,
+            ];
+        }
+
+        return $array;
     }
 
     private function isNamespaceExcluded(string $namespace): bool
     {
-        foreach ($this->composerJson->getAutoloadDev()->getPsr4()->getNamespaces() as $excluded) {
-            if ($namespace === trim($excluded['namespace'], '\\')) {
+        if (!$this->composerJsonParser->has('autoload-dev')) {
+            return false;
+        }
+
+        foreach ($this->getAutoloadNamespaces('autoload-dev') as $excluded) {
+            if ($namespace === $excluded['namespace']) {
                 return true;
             }
         }
@@ -162,9 +164,13 @@ class ReadmeGen
 
     private function isSourceExcluded(string $source): bool
     {
+        if (!$this->composerJsonParser->has('autoload-dev')) {
+            return false;
+        }
+
         $source = str_replace($this->projectRoot, '', $source);
 
-        foreach ($this->composerJson->getAutoloadDev()->getPsr4()->getNamespaces() as $excluded) {
+        foreach ($this->getAutoloadNamespaces('autoload-dev') as $excluded) {
             if (str_starts_with($source, $excluded['source'])) {
                 return true;
             }
@@ -178,6 +184,7 @@ class ReadmeGen
         $try = '';
         foreach (explode('\\', $classname) as $part) {
             $try = trim($try.'\\'.$part, '\\');
+
             if ($this->isNamespaceExcluded($try)) {
                 return true;
             }
