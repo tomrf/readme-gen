@@ -18,7 +18,7 @@ interface ReadmeFormatterInterface
 
     public function formatToc(array $structure): string;
 
-    public function formatMethod(ReflectionMethod $reflection): string;
+    public function formatMethod(ReflectionMethod $reflection, string $methodDefinition, array $tags): string;
 
     public function formatClass(ReflectionClass $reflection): string;
 }

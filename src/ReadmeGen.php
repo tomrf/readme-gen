@@ -5,7 +5,11 @@ declare(strict_types=1);
 namespace Tomrf\ReadmeGen;
 
 use HaydenPierce\ClassFinder\ClassFinder;
+use phpDocumentor\Reflection\DocBlockFactoryInterface;
+use phpDocumentor\Reflection\Types\Context;
+use phpDocumentor\Reflection\Types\ContextFactory;
 use ReflectionClass;
+use ReflectionMethod;
 use RuntimeException;
 use Tomrf\ReadmeGen\Interface\ReadmeFormatterInterface;
 
@@ -19,6 +23,9 @@ class ReadmeGen
     private string $projectName;
 
     private ComposerJsonParser $composerJsonParser;
+
+    private DocBlockFactoryInterface $docBlockFactory;
+    private ContextFactory $contextFactory;
 
     public function __construct(string $projectRoot)
     {
@@ -55,6 +62,9 @@ class ReadmeGen
 
         $this->autoloadProject();
         ClassFinder::setAppRoot($this->projectRoot);
+
+        $this->docBlockFactory = \phpDocumentor\Reflection\DocBlockFactory::createInstance();
+        $this->contextFactory = new \phpDocumentor\Reflection\Types\ContextFactory();
     }
 
     public function generate(
@@ -83,7 +93,12 @@ class ReadmeGen
                     }
 
                     $docToc[$class][] = $method->getName();
-                    $documentation .= $formatter->formatMethod($method);
+
+                    $documentation .= $formatter->formatMethod(
+                        $method,
+                        $this->getMethodDefinition($method),
+                        $this->getTags($method)
+                    );
                 }
             }
         }
@@ -105,6 +120,75 @@ class ReadmeGen
                 'date' => date('c'),
             ]
         );
+    }
+
+    protected function getTags($objectOrString, Context $context = null): array
+    {
+        if (method_exists($objectOrString, 'getDocComment')) {
+            if (!$objectOrString->getDocComment()) {
+                return [];
+            }
+        }
+
+        $tags = [];
+        $docBlock = $this->docBlockFactory->create($objectOrString, $context);
+
+        foreach ($docBlock->getTags() as $tag) {
+            $tags[] = [
+                $tag->getName() => str_replace(
+                    ["\n", "\r"],
+                    ' ',
+                    (string) $tag
+                ),
+            ];
+        }
+
+        return $tags;
+    }
+
+    protected function getMethodDefinition(ReflectionMethod $method): string
+    {
+        $parametersString = '';
+
+        $parameters = $method->getParameters();
+        foreach ($parameters as $n => $param) {
+            $type = $param->getType() ? sprintf('%s ', $param->getType()) : '';
+            $parametersString .= sprintf('    %s$%s', $type, $param->getName());
+
+            if ($param->isDefaultValueAvailable()) {
+                if ('array' === (string) $param->getType()) {
+                    $parametersString .= ' = []';
+                } elseif (str_contains((string) $param->getType(), 'string')) {
+                    $parametersString .= sprintf(' = \'%s\'', $param->getDefaultValue());
+                } else {
+                    $parametersString .= sprintf(' = %s', $param->getDefaultValue());
+                }
+            }
+
+            if (array_key_last($parameters) !== $n) {
+                $parametersString .= ','.PHP_EOL;
+            }
+        }
+
+        return sprintf(
+            "%s function %s(\n%s\n): %s",
+            $this->getAccessForReflectionMethod($method),
+            $method->getName(),
+            $parametersString,
+            ($method->getReturnType() ?? 'void')
+        );
+    }
+
+    protected function getAccessForReflectionMethod(ReflectionMethod $method): string
+    {
+        return trim(sprintf(
+            '%s%s%s%s%s',
+            $method->isAbstract() ? 'abstract ' : '',
+            $method->isPrivate() ? 'private ' : '',
+            $method->isProtected() ? 'protected ' : '',
+            $method->isPublic() ? 'public ' : '',
+            $method->isStatic() ? 'static ' : '',
+        ));
     }
 
     private function parsePackageName(string $name): void

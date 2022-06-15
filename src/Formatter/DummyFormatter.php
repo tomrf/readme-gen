@@ -52,7 +52,7 @@ class DummyFormatter extends AbstractFormatter
         return sprintf("%s\n\n", $formatted);
     }
 
-    public function formatMethod(ReflectionMethod $reflection): string
+    public function formatMethod(ReflectionMethod $reflection, string $methodDefinition, array $tags): string
     {
         $context = $this->contextFactory->createFromReflector($reflection);
         $docBlock = $this->docBlockFactory->create($reflection, $context);
@@ -67,10 +67,16 @@ class DummyFormatter extends AbstractFormatter
             $formatted .= sprintf("%s\n\n", (string) $docBlock->getDescription());
         }
 
+        // tags
+        $tagsString = '';
+        foreach ($tags as $tag) {
+            $tagsString .= sprintf("@%-8s %s\n", key($tag), (string) $tag[key($tag)]);
+        }
+
         $formatted .= sprintf(
             "%s\n%s\n\n",
-            $this->getMethodDefinition($reflection),
-            $this->getMethodTagsString($reflection) ? sprintf("\n%s", $this->getMethodTagsString($reflection, $context)) : '',
+            $methodDefinition,
+            $tagsString,
         );
 
         return $formatted;

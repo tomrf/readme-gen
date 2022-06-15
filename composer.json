@@ -35,7 +35,6 @@
     "require": {
         "php": "^8.0",
         "haydenpierce/class-finder": "^0.4.3",
-        "mcstreetguy/composer-parser": "^1.1",
         "phpdocumentor/reflection-docblock": "^5.3"
     },
     "require-dev": {

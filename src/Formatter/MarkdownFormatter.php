@@ -56,14 +56,14 @@ class MarkdownFormatter extends AbstractFormatter
         return sprintf("\n***\n\n%s", $formatted);
     }
 
-    public function formatMethod(ReflectionMethod $reflection): string
+    public function formatMethod(ReflectionMethod $reflection, string $methodDefinition, array $tags): string
     {
         $formatted = sprintf("#### %s()\n\n", $reflection->getName());
 
         if (false === $reflection->getDocComment()) {
             return sprintf('%s%s', $formatted, sprintf(
                 "```php\n%s\n```\n\n",
-                $this->getMethodDefinition($reflection)
+                $methodDefinition
             ));
         }
 
@@ -78,10 +78,16 @@ class MarkdownFormatter extends AbstractFormatter
             $formatted .= sprintf("%s\n\n", (string) $docBlock->getDescription());
         }
 
+        // tags
+        $tagsString = '';
+        foreach ($tags as $tag) {
+            $tagsString .= sprintf("@%-8s %s\n", key($tag), (string) $tag[key($tag)]);
+        }
+
         $formatted .= sprintf(
             "```php\n%s\n%s```\n\n",
-            $this->getMethodDefinition($reflection),
-            $this->getMethodTagsString($reflection) ? sprintf("\n%s", $this->getMethodTagsString($reflection, $context)) : '',
+            $methodDefinition,
+            $tagsString,
         );
 
         return $formatted;
