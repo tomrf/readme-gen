@@ -56,7 +56,9 @@ See [LICENSE](LICENSE) for more information.
 
 ReadmeGen.
 
-Very much a work in progress.#### __construct()
+Very much a work in progress.
+
+#### __construct()
 
 ```php
 public function __construct(
@@ -119,4 +121,4 @@ public function formatMethod(
 
 ***
 
-_Generated 2022-06-15T22:26:18+02:00 using 📚[tomrf/readme-gen](https://packagist.org/packages/tomrf/readme-gen)_
+_Generated 2022-06-15T22:32:28+02:00 using 📚[tomrf/readme-gen](https://packagist.org/packages/tomrf/readme-gen)_

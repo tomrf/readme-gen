@@ -53,7 +53,7 @@ class MarkdownFormatter extends AbstractFormatter
         }
 
         if ('' !== (string) $docBlock->getDescription()) {
-            $formatted .= sprintf('%s', (string) $docBlock->getDescription());
+            $formatted .= sprintf("%s\n\n", (string) $docBlock->getDescription());
         }
 
         return sprintf("\n***\n\n%s", $formatted);
