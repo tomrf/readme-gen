@@ -9,7 +9,12 @@ use phpDocumentor\Reflection\Types\ContextFactory;
 use ReflectionClass;
 use ReflectionMethod;
 
-class DummyFormatter extends AbstractFormatter
+/**
+ * DummyFormatter.
+ *
+ * @internal
+ */
+final class DummyFormatter extends AbstractFormatter
 {
     public function __construct(
         protected DocBlockFactoryInterface $docBlockFactory,

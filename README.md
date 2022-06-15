@@ -43,16 +43,6 @@ See [LICENSE](LICENSE) for more information.
  - [Tomrf\ReadmeGen\ReadmeGen](#-tomrfreadmegenreadmegenclass)
    - [__construct](#__construct)
    - [generate](#generate)
- - [Tomrf\ReadmeGen\Formatter\AbstractFormatter](#-tomrfreadmegenformatterabstractformatterclass)
-   - [__construct](#__construct)
-   - [formatToc](#formattoc)
-   - [formatMethod](#formatmethod)
-   - [formatClass](#formatclass)
- - [Tomrf\ReadmeGen\Formatter\DummyFormatter](#-tomrfreadmegenformatterdummyformatterclass)
-   - [__construct](#__construct)
-   - [formatToc](#formattoc)
-   - [formatClass](#formatclass)
-   - [formatMethod](#formatmethod)
  - [Tomrf\ReadmeGen\Formatter\MarkdownFormatter](#-tomrfreadmegenformattermarkdownformatterclass)
    - [__construct](#__construct)
    - [formatToc](#formattoc)
@@ -66,7 +56,7 @@ See [LICENSE](LICENSE) for more information.
 
 ReadmeGen.
 
-#### __construct()
+Very much a work in progress.#### __construct()
 
 ```php
 public function __construct(
@@ -83,78 +73,13 @@ public function generate(
 ): string
 ```
 
-### 📂 Tomrf\ReadmeGen\Formatter\AbstractFormatter::class
 
-#### __construct()
-
-```php
-abstract public function __construct(
-    phpDocumentor\Reflection\DocBlockFactoryInterface $docBlockFactory,
-    phpDocumentor\Reflection\Types\ContextFactory $contextFactory
-): void
-```
-
-#### formatToc()
-
-```php
-abstract public function formatToc(
-    array $structure
-): string
-```
-
-#### formatMethod()
-
-```php
-abstract public function formatMethod(
-    ReflectionMethod $reflection
-): string
-```
-
-#### formatClass()
-
-```php
-abstract public function formatClass(
-    ReflectionClass $reflection
-): string
-```
-
-### 📂 Tomrf\ReadmeGen\Formatter\DummyFormatter::class
-
-#### __construct()
-
-```php
-public function __construct(
-    phpDocumentor\Reflection\DocBlockFactoryInterface $docBlockFactory,
-    phpDocumentor\Reflection\Types\ContextFactory $contextFactory
-): void
-```
-
-#### formatToc()
-
-```php
-public function formatToc(
-    array $toc
-): string
-```
-
-#### formatClass()
-
-```php
-public function formatClass(
-    ReflectionClass $reflection
-): string
-```
-
-#### formatMethod()
-
-```php
-public function formatMethod(
-    ReflectionMethod $reflection
-): string
-```
+***
 
 ### 📂 Tomrf\ReadmeGen\Formatter\MarkdownFormatter::class
 
+MarkdownFormatter.
+
 #### __construct()
 
 ```php
@@ -184,7 +109,9 @@ public function formatClass(
 
 ```php
 public function formatMethod(
-    ReflectionMethod $reflection
+    ReflectionMethod $reflection,
+    string $methodDefinition,
+    array $tags
 ): string
 ```
 
@@ -192,4 +119,4 @@ public function formatMethod(
 
 ***
 
-_Generated 2022-06-15T03:24:41+02:00 using 📚[tomrf/readme-gen](https://packagist.org/packages/tomrf/readme-gen)_
+_Generated 2022-06-15T22:26:18+02:00 using 📚[tomrf/readme-gen](https://packagist.org/packages/tomrf/readme-gen)_

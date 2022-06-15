@@ -15,6 +15,8 @@ use Tomrf\ReadmeGen\Interface\ReadmeFormatterInterface;
 
 /**
  * ReadmeGen.
+ *
+ * Very much a work in progress.
  */
 class ReadmeGen
 {

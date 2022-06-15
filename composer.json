@@ -79,7 +79,6 @@
             "@putenv XDEBUG_MODE=coverage",
             "@phpunit --coverage-xml .phpunit.cache/code-coverage/xml",
             "ls -al .phpunit.cache/code-coverage/xml"
-
         ],
         "coverage-html": [
             "@putenv XDEBUG_MODE=coverage",

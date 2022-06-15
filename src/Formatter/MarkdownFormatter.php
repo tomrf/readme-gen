@@ -9,6 +9,9 @@ use phpDocumentor\Reflection\Types\ContextFactory;
 use ReflectionClass;
 use ReflectionMethod;
 
+/**
+ * MarkdownFormatter.
+ */
 class MarkdownFormatter extends AbstractFormatter
 {
     public function __construct(

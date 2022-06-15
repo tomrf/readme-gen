@@ -7,7 +7,12 @@ namespace Tomrf\ReadmeGen;
 use Exception;
 use RuntimeException;
 
-class ComposerJsonParser
+/**
+ * ComposerJsonParser.
+ *
+ * @internal
+ */
+final class ComposerJsonParser
 {
     private $composerJson;
     private array $rootProperties = [

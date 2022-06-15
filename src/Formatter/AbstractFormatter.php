@@ -8,6 +8,11 @@ use phpDocumentor\Reflection\DocBlockFactoryInterface;
 use phpDocumentor\Reflection\Types\ContextFactory;
 use Tomrf\ReadmeGen\Interface\ReadmeFormatterInterface;
 
+/**
+ * AbstractFormatter.
+ *
+ * @internal
+ */
 abstract class AbstractFormatter implements ReadmeFormatterInterface
 {
     protected DocBlockFactoryInterface $docBlockFactory;

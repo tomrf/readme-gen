@@ -4,7 +4,12 @@ declare(strict_types=1);
 
 namespace Tomrf\ReadmeGen;
 
-class TemplateCompiler
+/**
+ * TemplateCompiler.
+ *
+ * @internal
+ */
+final class TemplateCompiler
 {
     public function compile(ComposerJsonParser $composerJsonParser, string $template, array $extra = []): string
     {
