@@ -87,7 +87,6 @@ class ReadmeGen
                     }
 
                     $docToc[$class][] = $method->getName();
-                    var_dump($method);
                     $documentation .= $formatter->formatMethod($method);
                 }
             }
