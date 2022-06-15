@@ -9,6 +9,8 @@ use ReflectionMethod;
 
 interface ReadmeFormatterInterface
 {
+    public function formatToc(array $structure): string;
+
     public function formatMethod(ReflectionMethod $reflection): string;
 
     public function formatClass(ReflectionClass $reflection): string;

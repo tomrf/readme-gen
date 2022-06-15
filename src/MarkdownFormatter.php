@@ -19,6 +19,20 @@ class MarkdownFormatter implements ReadmeFormatterInterface
         // ..
     }
 
+    public function formatToc(array $toc): string
+    {
+        $formatted = '';
+
+        foreach ($toc as $class => $methods) {
+            $formatted .= sprintf(" - [%s](#%s)\n", $class, sprintf('-%sclass', str_replace('\\', '', strtolower($class))));
+            foreach ($methods as $method) {
+                $formatted .= sprintf("   - [%s](#%s)\n", $method, strtolower($method));
+            }
+        }
+
+        return $formatted;
+    }
+
     public function formatClass(ReflectionClass $reflection): string
     {
         $context = $this->contextFactory->createFromReflector($reflection);
@@ -34,10 +48,10 @@ class MarkdownFormatter implements ReadmeFormatterInterface
         }
 
         if ('' !== (string) $docBlock->getDescription()) {
-            $formatted .= sprintf("%s\n\n", (string) $docBlock->getDescription());
+            $formatted .= sprintf('%s', (string) $docBlock->getDescription());
         }
 
-        return $formatted;
+        return sprintf("\n***\n\n%s", $formatted);
     }
 
     public function formatMethod(ReflectionMethod $reflection): string
@@ -58,7 +72,7 @@ class MarkdownFormatter implements ReadmeFormatterInterface
         $formatted .= sprintf(
             "```php\n%s\n%s```\n\n",
             $this->getMethodDefinition($reflection),
-            $this->getMethodTagsString($reflection) ? sprintf("\n%s", $this->getMethodTagsString($reflection)) : '',
+            $this->getMethodTagsString($reflection) ? sprintf("\n%s", $this->getMethodTagsString($reflection, $context)) : '',
         );
 
         return $formatted;

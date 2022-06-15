@@ -1,4 +1,5 @@
 # :package_project - :package_description
+
 [![PHP Version Require](http://poser.pugx.org/:package_name/require/php?style=flat-square)](https://packagist.org/packages/:package_name) [![Latest Stable Version](http://poser.pugx.org/:package_name/v?style=flat-square)](https://packagist.org/packages/:package_name) [![License](http://poser.pugx.org/:package_name/license?style=flat-square)](https://packagist.org/packages/:package_name)
 
 :package_extra_intro
@@ -27,4 +28,9 @@ This project is released under the :package_license License (:package_license).
 See [LICENSE](LICENSE) for more information.
 
 ## Documentation
-:documentation
+:documentation_toc
+:documentation_body
+
+***
+
+_Generated :date using 📚[tomrf/readme-gen](https://packagist.org/packages/tomrf/readme-gen)_
