@@ -9,7 +9,7 @@ use Tomrf\ReadmeGen\ReadmeGen;
 
 /**
  * @internal
- * @covers \Tomrf\ReadmeGen\Example
+ * @covers \Tomrf\ReadmeGen\ReadmeGen
  */
 final class ReadmeGenTest extends TestCase
 {
@@ -18,13 +18,8 @@ final class ReadmeGenTest extends TestCase
         // ...
     }
 
-    public function testExampleIsInstanceOfExample(): void
+    public function testNewReadmeGenIsInstanceOfReadmeGen(): void
     {
-        static::assertInstanceOf(ReadmeGen::class, new ReadmeGen());
-    }
-
-    public function testHello(): void
-    {
-        static::assertSame('Hello, world.', (new ReadmeGen())->hello());
+        static::assertInstanceOf(ReadmeGen::class, new ReadmeGen('.'));
     }
 }

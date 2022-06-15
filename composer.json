@@ -1,8 +1,8 @@
 {
     "name": "tomrf/readme-gen",
     "type": "library",
-    "description": "generates markdown readme file for php packages",
-    "keywords": [ "readme", "markdown" ],
+    "description": "generates readme with public api documentation for php packages",
+    "keywords": [ "readme",  "documentation", "readme.md", "markdown" ],
     "homepage": "http://github.com/tomrf/readme-gen",
     "license": "MIT",
     "authors": [
@@ -14,15 +14,22 @@
     ],
     "extra": {
         "intro": [
-            "This is a long description of the package and stuff and stuff lorem ipsum dolor sit amet!"
+            "Automatically generates a 📚 README file with public API documentation for a PHP package, ",
+            "based on docblocks and package information from composer.json",
+            "",
+            "Included formatters:",
+            " - Markdown"
         ],
         "example": [
-            "$variable = new PackageStuff();",
-            "$variable->doStuff(123);",
+            "$readmeGen = new \\Tomrf\\ReadmeGen\\ReadmeGen('.'); // path to project directory",
             "",
-            "if ($variable->thing() === '123') {",
-            "    echo 'lol';",
-            "}"
+            "echo $readmeGen->generate(",
+            "    new Tomrf\\ReadmeGen\\Formatter\\MarkdownFormatter(",
+            "        \\phpDocumentor\\Reflection\\DocBlockFactory::createInstance(),",
+            "        new \\phpDocumentor\\Reflection\\Types\\ContextFactory()",
+            "    ),",
+            "    'resources/template.md'",
+            ");"
         ]
     },
     "require": {

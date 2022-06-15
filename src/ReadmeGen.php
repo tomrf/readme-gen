@@ -9,6 +9,7 @@ use MCStreetguy\ComposerParser\ComposerJson;
 use MCStreetguy\ComposerParser\Factory as ComposerParser;
 use ReflectionClass;
 use RuntimeException;
+use Tomrf\ReadmeGen\Interface\ReadmeFormatterInterface;
 
 /**
  * ReadmeGen.
@@ -86,7 +87,7 @@ class ReadmeGen
                     }
 
                     $docToc[$class][] = $method->getName();
-
+                    var_dump($method);
                     $documentation .= $formatter->formatMethod($method);
                 }
             }

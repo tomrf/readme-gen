@@ -2,19 +2,13 @@
 
 declare(strict_types=1);
 
-use phpDocumentor\Reflection\Types\ContextFactory;
-use Tomrf\ReadmeGen\MarkdownFormatter;
-use Tomrf\ReadmeGen\ReadmeGen;
-
 require 'vendor/autoload.php';
 
-$readmeGen = new ReadmeGen('/home/tom/projects/tom/tomrf-autowire');
-$readme = $readmeGen->generate(
-    new MarkdownFormatter(
+$readmeGen = new \Tomrf\ReadmeGen\ReadmeGen('.'); // path to project directory
+echo $readmeGen->generate(
+    new Tomrf\ReadmeGen\Formatter\MarkdownFormatter(
         \phpDocumentor\Reflection\DocBlockFactory::createInstance(),
-        new ContextFactory(),
+        new \phpDocumentor\Reflection\Types\ContextFactory(),
     ),
     'resources/template.md'
 );
-
-echo $readme;
