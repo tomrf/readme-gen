@@ -65,7 +65,7 @@
             "php-cs-fixer fix --allow-risky=yes --diff --verbose src/"
         ],
         "phpstan": [
-            "phpstan analyze --level max src/"
+            "phpstan analyze --level 5 src/"
         ],
         "phpmd": [
             "phpmd src/ ansi .phpmd-ruleset.xml"
