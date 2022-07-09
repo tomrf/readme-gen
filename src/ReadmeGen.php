@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tomrf\ReadmeGen;
 
 use HaydenPierce\ClassFinder\ClassFinder;
+use phpDocumentor\Reflection\DocBlockFactory;
 use phpDocumentor\Reflection\DocBlockFactoryInterface;
 use phpDocumentor\Reflection\Types\Context;
 use phpDocumentor\Reflection\Types\ContextFactory;
@@ -31,13 +32,7 @@ class ReadmeGen
 
     public function __construct(string $projectRoot)
     {
-        if (!str_ends_with($projectRoot, '/')) {
-            $projectRoot = sprintf('%s/', $projectRoot);
-        }
-
-        if (!file_exists($projectRoot)) {
-            throw new RuntimeException(sprintf('No such file or directory: %s', $projectRoot));
-        }
+        $projectRoot = sprintf('%s/', rtrim($projectRoot, '/'));
 
         if (!is_dir($projectRoot)) {
             throw new RuntimeException(sprintf('Not a directory: %s', $projectRoot));
@@ -65,8 +60,8 @@ class ReadmeGen
         $this->autoloadProject();
         ClassFinder::setAppRoot($this->projectRoot);
 
-        $this->docBlockFactory = \phpDocumentor\Reflection\DocBlockFactory::createInstance();
-        $this->contextFactory = new \phpDocumentor\Reflection\Types\ContextFactory();
+        $this->docBlockFactory = DocBlockFactory::createInstance();
+        $this->contextFactory = new ContextFactory();
     }
 
     /**
@@ -95,11 +90,7 @@ class ReadmeGen
                 $reflectionClass = new ReflectionClass($class);
                 $documentation .= $formatter->formatClass($reflectionClass);
                 foreach ($reflectionClass->getMethods() as $method) {
-                    if (!$method->isPublic()) {
-                        continue;
-                    }
-
-                    if ($this->isMethodExcluded($method)) {
+                    if (!$method->isPublic() || $this->isMethodExcluded($method)) {
                         continue;
                     }
 
@@ -167,12 +158,12 @@ class ReadmeGen
             $parametersString .= sprintf('    %s$%s', $type, $param->getName());
 
             if ($param->isDefaultValueAvailable()) {
+                $parametersString .= sprintf(' = %s', $param->getDefaultValue() ?? 'null');
+
                 if ('array' === (string) $param->getType()) {
                     $parametersString .= ' = []';
                 } elseif (str_contains((string) $param->getType(), 'string')) {
                     $parametersString .= sprintf(' = \'%s\'', $param->getDefaultValue());
-                } else {
-                    $parametersString .= sprintf(' = %s', $param->getDefaultValue());
                 }
             }
 
@@ -182,10 +173,10 @@ class ReadmeGen
         }
 
         return sprintf(
-            "%s function %s(\n%s\n): %s",
+            '%s function %s(%s): %s',
             $this->getAccessForReflectionMethod($method),
             $method->getName(),
-            $parametersString,
+            trim($parametersString) ? sprintf("\n%s\n", $parametersString) : '',
             ($method->getReturnType() ?? 'void')
         );
     }
