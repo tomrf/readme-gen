@@ -99,6 +99,10 @@ class ReadmeGen
                         continue;
                     }
 
+                    if ($this->isMethodExcluded($method)) {
+                        continue;
+                    }
+
                     $docToc[$class][] = $method->getName();
 
                     $documentation .= $formatter->formatMethod(
@@ -265,6 +269,21 @@ class ReadmeGen
             if (str_starts_with($source, $excluded['source'])) {
                 return true;
             }
+        }
+
+        return false;
+    }
+
+    private function isMethodExcluded(ReflectionMethod $method): bool
+    {
+        $docComment = $method->getDocComment();
+
+        if (false === $docComment) {
+            return false;
+        }
+
+        if (str_contains($docComment, '@internal')) {
+            return true;
         }
 
         return false;
