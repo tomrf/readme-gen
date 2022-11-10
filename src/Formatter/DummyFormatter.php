@@ -57,8 +57,18 @@ final class DummyFormatter extends AbstractFormatter
         return sprintf("%s\n\n", $formatted);
     }
 
-    public function formatMethod(ReflectionMethod $reflection, string $methodDefinition, array $tags): string
+
+        public function formatMethod(ReflectionMethod $reflection, string $methodDefinition, array $tags): string
     {
+        $formatted = sprintf("#### %s()\n\n", $reflection->getName());
+
+        if (false === $reflection->getDocComment()) {
+            return sprintf('%s%s', $formatted, sprintf(
+                "```php\n%s\n```\n\n",
+                $methodDefinition
+            ));
+        }
+
         $context = $this->contextFactory->createFromReflector($reflection);
         $docBlock = $this->docBlockFactory->create($reflection, $context);
 
@@ -86,4 +96,6 @@ final class DummyFormatter extends AbstractFormatter
 
         return $formatted;
     }
+
+
 }
