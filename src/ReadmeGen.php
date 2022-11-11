@@ -158,12 +158,12 @@ class ReadmeGen
             $parametersString .= sprintf('    %s$%s', $type, $param->getName());
 
             if ($param->isDefaultValueAvailable()) {
-                $parametersString .= sprintf(' = %s', $param->getDefaultValue() ?? 'null');
-
                 if ('array' === (string) $param->getType()) {
                     $parametersString .= ' = []';
                 } elseif (str_contains((string) $param->getType(), 'string')) {
                     $parametersString .= sprintf(' = \'%s\'', $param->getDefaultValue());
+                } else {
+                    $parametersString .= sprintf(' = %s', $param->getDefaultValue() ?? 'null');
                 }
             }
 

@@ -58,7 +58,7 @@ final class DummyFormatter extends AbstractFormatter
     }
 
 
-        public function formatMethod(ReflectionMethod $reflection, string $methodDefinition, array $tags): string
+    public function formatMethod(ReflectionMethod $reflection, string $methodDefinition, array $tags): string
     {
         $formatted = sprintf("#### %s()\n\n", $reflection->getName());
 

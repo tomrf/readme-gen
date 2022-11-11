@@ -5,21 +5,78 @@ declare(strict_types=1);
 
 use phpDocumentor\Reflection\DocBlockFactory;
 use phpDocumentor\Reflection\Types\ContextFactory;
+use Tomrf\ReadmeGen\Formatter\DummyFormatter;
 use Tomrf\ReadmeGen\Formatter\MarkdownFormatter;
 use Tomrf\ReadmeGen\ReadmeGen;
 
+function printUsage($output = STDOUT, bool $short = false): void
+{
+    fwrite($output, 'Usage: readme-gen [options] [project path]'.PHP_EOL);
+
+    if ($short) {
+        return;
+    }
+
+    fwrite($output, 'Options:'.PHP_EOL);
+    fwrite($output, '  -h                Print this help message'.PHP_EOL);
+    fwrite($output, '  -o <output>       Path to output file'.PHP_EOL);
+    fwrite($output, '                    If not specified, output will be printed to stdout'.PHP_EOL);
+    fwrite($output, '  -t <template>     Path to template file'.PHP_EOL);
+    fwrite($output, '  -f <formatter>    Formatter to use'.PHP_EOL);
+    fwrite($output, ''.PHP_EOL);
+    fwrite($output, '                    Default template:'.PHP_EOL);
+    fwrite($output, '                      '.sprintf('%s/../resources/template.md', __DIR__).PHP_EOL);
+    fwrite($output, ''.PHP_EOL);
+    fwrite($output, '                    Formatters:'.PHP_EOL);
+    fwrite($output, '                        markdown (default), dummy'.PHP_EOL);
+    fwrite($output, ''.PHP_EOL);
+    fwrite($output, 'Example: readme-gen -o README.md -t template.md -f markdown /path/to/project'.PHP_EOL);
+}
+
 require 'vendor/autoload.php';
 
-if (!isset($argv[2])) {
-    fprintf(STDERR, "error: missing argument(s)\nusage: readme-gen <projectPath> <templatePath>\n");
+$options = getopt('ht:f:o:', [], $optIndex);
 
+$projectRoot = $argv[$optIndex] ?? '.';
+$template = sprintf('%s/../resources/template.md', __DIR__);
+$beVerbose = false;
+
+if (isset($options['h'])) {
+    printUsage();
+    exit(0);
+}
+
+if (isset($options['t'])) {
+    $template = $options['t'];
+}
+
+if (!file_exists($template)) {
+    fprintf(
+        STDERR,
+        "Error: %s\n\n",
+        sprintf('Template file not found: %s', $template),
+    );
+
+    printUsage(STDERR, true);
     exit(1);
 }
 
-echo (new ReadmeGen($argv[1]))->generate(
-    new MarkdownFormatter(
+$formatterClass = match($options['f'] ?? 'markdown') {
+    'markdown' => MarkdownFormatter::class,
+    'dummy' => DummyFormatter::class,
+    default => null,
+};
+
+$readme = (new ReadmeGen($projectRoot))->generate(
+    new $formatterClass(
         DocBlockFactory::createInstance(),
         new ContextFactory(),
     ),
-    $argv[2]
+    $template
 );
+
+if (isset($options['o'])) {
+    file_put_contents($options['o'], $readme);
+} else {
+    echo $readme;
+}
